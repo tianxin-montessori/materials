@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>畢氏定理的感官介紹和準備</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            /* 防止在觸控螢幕上拖曳物件時畫面跟著捲動 */
+            touch-action: none;
+            overflow: hidden;
+            background-color: #f3f4f6;
+        }
+        svg {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .draggable {
+            cursor: grab;
+            transition: filter 0.2s;
+            /* 保持細緻的接縫陰影，避免產生高度差錯覺 */
+            filter: drop-shadow(0px 0px 2px rgba(0,0,0,0.4));
+        }
+        .draggable:active, .draggable.dragging {
+            cursor: grabbing;
+            /* 提起時陰影明顯加大，增強拿在半空中的立體空間感 */
+            filter: drop-shadow(3px 10px 15px rgba(0,0,0,0.5)) !important;
+        }
+        .animating {
+            /* 用於旋轉或吸附時的平滑動畫，同時保留陰影的過渡效果 */
+            transition: transform 0.2s ease-out, filter 0.2s;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col items-center justify-center font-sans text-gray-800">
+
+    <div class="w-full max-w-6xl p-2 md:p-6 flex flex-col items-center h-full max-h-[900px]">
+        <!-- 標題與說明 -->
+        <div class="text-center mb-4">
+            <h1 class="text-2xl md:text-3xl font-bold mb-2 text-gray-800">畢氏定理的感官介紹和準備</h1>
+            <p class="text-sm md:text-base text-gray-600 bg-white px-4 py-2 rounded-full shadow-sm inline-block">
+                💡 <strong>如何探索：</strong> 左側為未裁切鉛板，右側為裁切鉛板。拖曳即可取出。<br>
+                <span class="text-blue-600 font-bold">點擊「小三角形」鉛板可旋轉 90 度</span>，試著將右側的碎片拼入不同顏色的凹槽中！
+            </p>
+        </div>
+
+        <!-- 互動區 -->
+        <div class="relative w-full flex-grow bg-[#7cb359] rounded-xl shadow-xl overflow-hidden flex items-center justify-center">
+            
+            <svg id="canvas" viewBox="0 0 1450 700" class="w-full h-full max-h-full">
+                
+                <defs>
+                    <!-- 擬真立體倒角濾鏡 (Bevel Filter)，為鉛板增加邊緣高光與厚度陰影 -->
+                    <filter id="plate-3d" x="-10%" y="-10%" width="120%" height="120%">
+                        <!-- 左上高光邊緣 (模擬反光與厚度) - 降低透明度與偏移量，避免像白色縫隙 -->
+                        <feOffset dx="1" dy="1" in="SourceAlpha" result="offAlpha1"/>
+                        <feComposite operator="out" in="SourceAlpha" in2="offAlpha1" result="highlightMask"/>
+                        <feFlood flood-color="#ffffff" flood-opacity="0.25" result="highlight"/>
+                        <feComposite operator="in" in="highlight" in2="highlightMask" result="highLightBlend"/>
+
+                        <!-- 右下陰影邊緣 (模擬背光與厚度) - 稍微收束厚度，看起來更自然 -->
+                        <feOffset dx="-1" dy="-1" in="SourceAlpha" result="offAlpha2"/>
+                        <feComposite operator="out" in="SourceAlpha" in2="offAlpha2" result="shadowMask"/>
+                        <feFlood flood-color="#000000" flood-opacity="0.3" result="shadow"/>
+                        <feComposite operator="in" in="shadow" in2="shadowMask" result="shadowBlend"/>
+
+                        <!-- 微模糊讓邊緣顯得圓潤不刺眼，像打磨過的實體金屬板 -->
+                        <feGaussianBlur stdDeviation="0.3" in="highLightBlend" result="highLightBlur"/>
+                        <feGaussianBlur stdDeviation="0.3" in="shadowBlend" result="shadowBlur"/>
+
+                        <!-- 合併圖層：原圖形 + 高光邊緣 + 陰影邊緣 -->
+                        <feMerge>
+                            <feMergeNode in="SourceGraphic"/>
+                            <feMergeNode in="highLightBlur"/>
+                            <feMergeNode in="shadowBlur"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+
+                <!-- 靜態底圖層 (白色凹槽) -->
+                <g id="static-layer">
+                    <!-- ========== 左半邊 (未裁切盤的白色凹槽) ========== -->
+                    <g fill="#ffffff" stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round">
+                        <!-- 藍色正方形底 -->
+                        <rect x="200" y="250" width="150" height="150" />
+                        <!-- 黃色正方形底 -->
+                        <rect x="350" y="400" width="150" height="150" />
+                        <!-- 紅色正方形底 -->
+                        <polygon points="350,250 500,400 650,250 500,100" />
+                        <!-- 白色直角三角形底 -->
+                        <polygon points="350,400 500,400 350,250" />
+                    </g>
+
+                    <!-- ========== 右半邊 (裁切盤的白色凹槽) ========== -->
+                    <g fill="#ffffff" stroke="#cbd5e1" stroke-width="2" stroke-linejoin="round">
+                        <!-- 藍色正方形底 -->
+                        <rect x="900" y="250" width="150" height="150" />
+                        <!-- 黃色正方形底 -->
+                        <rect x="1050" y="400" width="150" height="150" />
+                        <!-- 紅色正方形底 -->
+                        <polygon points="1050,250 1200,400 1350,250 1200,100" />
+                        <!-- 白色直角三角形底 -->
+                        <polygon points="1050,400 1200,400 1050,250" />
+                    </g>
+                </g>
+
+                <!-- 動態碎片層 (JS生成) -->
+                <g id="pieces-layer"></g>
+            </svg>
+        </div>
+
+        <!-- 底部控制 -->
+        <div class="mt-4 flex gap-4">
+            <button onclick="resetGame()" class="px-8 py-3 bg-white hover:bg-gray-100 text-gray-800 font-bold rounded-xl shadow-md border border-gray-300 transition transform hover:scale-105 active:scale-95">
+                將所有鉛板歸位
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 定義每一塊鉛板的初始狀態
+        // 座標系統以 150 為基準單位長度
+        const initialPiecesState = [
+            // ========== 左盤 (未裁切實體) ==========
+            { id: 'L_Blue', type: 'square', color: '#2a4db3', startX: 200, startY: 250, startRot: 0 },
+            { id: 'L_Yellow', type: 'square', color: '#ffeb4c', startX: 350, startY: 400, startRot: 0 },
+            { id: 'L_Red', type: 'redSquare', color: '#e64a38', startX: 500, startY: 250, startRot: 0 },
+
+            // ========== 右盤 (裁切碎片) ==========
+            // 藍色裁切 (2塊)
+            { id: 'R_Blue_1', type: 'tri', color: '#2a4db3', startX: 900, startY: 400, startRot: 0 },
+            { id: 'R_Blue_2', type: 'tri', color: '#2a4db3', startX: 1050, startY: 250, startRot: 180 },
+            // 黃色裁切 (2塊)
+            { id: 'R_Yellow_1', type: 'tri', color: '#ffeb4c', startX: 1050, startY: 550, startRot: 0 },
+            { id: 'R_Yellow_2', type: 'tri', color: '#ffeb4c', startX: 1200, startY: 400, startRot: 180 },
+            // 紅色裁切 (4塊)
+            { id: 'R_Red_1', type: 'tri', color: '#e64a38', startX: 1200, startY: 250, startRot: 180 }, // 左下
+            { id: 'R_Red_2', type: 'tri', color: '#e64a38', startX: 1200, startY: 250, startRot: 270 }, // 左上
+            { id: 'R_Red_3', type: 'tri', color: '#e64a38', startX: 1200, startY: 250, startRot: 0 },   // 右上
+            { id: 'R_Red_4', type: 'tri', color: '#e64a38', startX: 1200, startY: 250, startRot: 90 },  // 右下
+
+            // 將白色三角形移到陣列最後面，讓它們在 SVG 渲染層級處於最上層。
+            { id: 'L_White', type: 'tri', color: '#ffffff', startX: 350, startY: 400, startRot: 0 },
+            { id: 'R_White', type: 'tri', color: '#ffffff', startX: 1050, startY: 400, startRot: 0 },
+        ];
+
+        // 建立所有可吸附的合法座標點 (跨盤共用)
+        const snapPoints = {
+            // 小三角形可以放置的所有位置 (共20個凹槽位置)
+            tri: [
+                {x: 350, y: 400, rot: 0}, {x: 200, y: 400, rot: 0}, {x: 350, y: 250, rot: 180},
+                {x: 350, y: 550, rot: 0}, {x: 500, y: 400, rot: 180}, {x: 500, y: 250, rot: 0},
+                {x: 500, y: 250, rot: 90}, {x: 500, y: 250, rot: 180}, {x: 500, y: 250, rot: 270},
+                
+                {x: 1050, y: 400, rot: 0}, {x: 900, y: 400, rot: 0}, {x: 1050, y: 250, rot: 180},
+                {x: 1050, y: 550, rot: 0}, {x: 1200, y: 400, rot: 180}, {x: 1200, y: 250, rot: 0},
+                {x: 1200, y: 250, rot: 90}, {x: 1200, y: 250, rot: 180}, {x: 1200, y: 250, rot: 270}
+            ],
+            // 直角正方形可以放置的位置
+            square: [
+                {x: 200, y: 250}, {x: 350, y: 400}, // 左盤藍黃槽
+                {x: 900, y: 250}, {x: 1050, y: 400} // 右盤藍黃槽
+            ],
+            // 傾斜大正方形可以放置的位置
+            redSquare: [
+                {x: 500, y: 250}, // 左盤紅槽
+                {x: 1200, y: 250} // 右盤紅槽
+            ]
+        };
+
+        let pieces = [];
+        const canvas = document.getElementById('canvas');
+        const piecesLayer = document.getElementById('pieces-layer');
+
+        // 初始化遊戲
+        function initGame() {
+            pieces = JSON.parse(JSON.stringify(initialPiecesState));
+            pieces.forEach(p => { p.x = p.startX; p.y = p.startY; p.rot = p.startRot; });
+            renderPieces();
+        }
+
+        // 渲染鉛板到 SVG 中
+        function renderPieces() {
+            piecesLayer.innerHTML = '';
+            pieces.forEach(p => {
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("id", p.id);
+                g.setAttribute("class", "draggable animating");
+                g.setAttribute("data-id", p.id);
+                
+                // 定義不同顏色鉛板對應的深色灰階點顏色
+                let dotColor = '#1f2937'; // 預設深灰
+                if (p.color === '#ffffff') dotColor = '#9ca3af'; // 白色鉛板用深灰色點
+                else if (p.color === '#2a4db3') dotColor = '#1e3a8a'; // 藍色鉛板用深藍色點
+                else if (p.color === '#ffeb4c') dotColor = '#8a8253'; // 黃色鉛板用黃色灰階點
+                else if (p.color === '#e64a38') dotColor = '#991b1b'; // 紅色鉛板用深紅色點
+
+                let innerHTML = '';
+                // 依照形狀種類繪製，並加入 filter="url(#plate-3d)" 套用 3D 厚度倒角
+                if (p.type === 'tri') {
+                    innerHTML = `
+                        <polygon points="0,0 150,0 0,-150" fill="${p.color}" filter="url(#plate-3d)" />
+                        <circle cx="45" cy="-45" r="4" fill="${dotColor}" /> <!-- 把手小圓點 -->
+                    `;
+                } else if (p.type === 'square') {
+                    innerHTML = `
+                        <rect x="0" y="0" width="150" height="150" fill="${p.color}" filter="url(#plate-3d)" />
+                        <circle cx="75" cy="75" r="4" fill="${dotColor}" />
+                    `;
+                } else if (p.type === 'redSquare') {
+                    innerHTML = `
+                        <polygon points="-150,0 0,150 150,0 0,-150" fill="${p.color}" filter="url(#plate-3d)" />
+                        <circle cx="0" cy="0" r="4" fill="${dotColor}" />
+                    `;
+                }
+                
+                g.innerHTML = innerHTML;
+                piecesLayer.appendChild(g);
+                updatePieceTransform(p, false);
+            });
+        }
+
+        // 更新變形 (平移與旋轉)
+        function updatePieceTransform(piece, animate = false) {
+            const el = document.getElementById(piece.id);
+            if (!el) return;
+            
+            if (animate) el.classList.add('animating');
+            else el.classList.remove('animating');
+
+            el.setAttribute('transform', `translate(${piece.x}, ${piece.y}) rotate(${piece.rot})`);
+        }
+
+        // --- 拖曳邏輯 ---
+        let activePiece = null;
+        let startPointer = { x: 0, y: 0 };
+        let startPiecePos = { x: 0, y: 0 };
+        let hasMoved = false;
+
+        function getSvgCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = 1450 / rect.width;
+            const scaleY = 700 / rect.height;
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function getClientPos(e) {
+            if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            else if (e.changedTouches && e.changedTouches.length > 0) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+            return { x: e.clientX, y: e.clientY };
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            const targetEl = e.target.closest('.draggable');
+            if (!targetEl) return;
+            
+            e.preventDefault();
+            canvas.setPointerCapture(e.pointerId);
+
+            activePiece = pieces.find(p => p.id === targetEl.getAttribute('data-id'));
+            if (!activePiece) return;
+
+            targetEl.classList.remove('animating');
+            targetEl.classList.add('dragging');
+            piecesLayer.appendChild(targetEl); // 移至最上層
+
+            const clientPos = getClientPos(e);
+            startPointer = getSvgCoords(clientPos.x, clientPos.y);
+            startPiecePos = { x: activePiece.x, y: activePiece.y };
+            hasMoved = false;
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (!activePiece) return;
+            e.preventDefault();
+
+            const currentPointer = getSvgCoords(getClientPos(e).x, getClientPos(e).y);
+            const dx = currentPointer.x - startPointer.x;
+            const dy = currentPointer.y - startPointer.y;
+
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) hasMoved = true;
+
+            activePiece.x = startPiecePos.x + dx;
+            activePiece.y = startPiecePos.y + dy;
+
+            updatePieceTransform(activePiece, false);
+        });
+
+        canvas.addEventListener('pointerup', (e) => {
+            if (!activePiece) return;
+            canvas.releasePointerCapture(e.pointerId);
+
+            const targetEl = document.getElementById(activePiece.id);
+            if (targetEl) targetEl.classList.remove('dragging');
+
+            if (!hasMoved) {
+                // 單純點擊時，僅允許「小三角形」旋轉
+                if (activePiece.type === 'tri') {
+                    activePiece.rot += 90; // 統一順時針累積旋轉，避免從 270 變 0 時的逆轉動畫
+                    updatePieceTransform(activePiece, true);
+                }
+            } else {
+                // 拖曳結束檢查吸附
+                checkSnap(activePiece);
+                updatePieceTransform(activePiece, true);
+            }
+            
+            activePiece = null;
+        });
+
+        // 吸附對齊邏輯 (智能判定符合的洞口)
+        function checkSnap(piece) {
+            const points = snapPoints[piece.type];
+            
+            for (const pt of points) {
+                const distance = Math.sqrt((piece.x - pt.x) ** 2 + (piece.y - pt.y) ** 2);
+
+                if (distance < 50) {
+                    if (piece.type === 'tri') {
+                        // 三角形需同時核對角度
+                        const normalizedRot = ((piece.rot % 360) + 360) % 360;
+                        if (normalizedRot === pt.rot) {
+                            // 檢查該洞口是否已被同一種形狀佔用
+                            const isOccupied = pieces.some(p => 
+                                p.id !== piece.id && p.type === 'tri' &&
+                                Math.abs(p.x - pt.x) < 5 && Math.abs(p.y - pt.y) < 5 && 
+                                ((p.rot % 360) + 360) % 360 === pt.rot
+                            );
+                            if (!isOccupied) {
+                                piece.x = pt.x; piece.y = pt.y;
+                                break;
+                            }
+                        }
+                    } else {
+                        // 正方形只要距離夠近即吸附
+                        const isOccupied = pieces.some(p => 
+                            p.id !== piece.id && p.type === piece.type &&
+                            Math.abs(p.x - pt.x) < 5 && Math.abs(p.y - pt.y) < 5
+                        );
+                        if (!isOccupied) {
+                            piece.x = pt.x; piece.y = pt.y; piece.rot = 0;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        window.resetGame = function() { initGame(); }
+        initGame();
+    </script>
+</body>
+</html>
