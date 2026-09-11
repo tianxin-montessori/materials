@@ -35,7 +35,6 @@
         background-color:#F7F4EA;
         font-family:var(--tx-font-ui);
         color:#3F91A7; letter-spacing:.05em;
-        overflow:hidden;
     }
 
     /* ── 選單畫面 ── */
@@ -79,8 +78,11 @@
     .tag-free   { background:#30312D; color:#fff; }
 
     /* ── 教具畫面 ── */
+    /* overflow:hidden 原本寫在 body 上，導致選單畫面（手機直式、卡片較長時）超出視窗高度也無法
+       下拉捲動，內容會被整個鎖死看不到。教具畫面（iframe 全螢幕）才需要固定滿版、不捲動，
+       所以把這個限制改成只套用在 #app-view 本身，選單畫面维持一般可捲動。 */
     #app-view {
-        display:none; position:relative; width:100%; height:100%;
+        display:none; position:relative; width:100%; height:100%; overflow:hidden;
     }
     #app-frame {
         width:100%; height:100%; border:none; display:block;
